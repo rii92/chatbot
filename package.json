@@ -7,13 +7,18 @@
     "start": "node app.js",
     "dev": "nodemon app.js"
   },
-  "keywords": ["whatsapp", "bot", "baileys"],
+  "keywords": [
+    "whatsapp",
+    "bot",
+    "baileys"
+  ],
   "author": "",
   "license": "ISC",
   "description": "Simple WhatsApp bot using Baileys",
   "dependencies": {
     "@hapi/boom": "^10.0.1",
     "@whiskeysockets/baileys": "^6.7.18",
+    "qr-image": "^3.2.0",
     "qrcode-terminal": "^0.12.0"
   },
   "engines": {

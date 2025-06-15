@@ -1,12 +1,45 @@
 const { default: makeWASocket, DisconnectReason, useMultiFileAuthState } = require('@whiskeysockets/baileys');
 const { Boom } = require('@hapi/boom');
 const qrcode = require('qrcode-terminal');
+const qr = require('qr-image');
+const fs = require('fs');
+const path = require('path');
 
 // Simple logging function with level support
 const log = (message, level = 'info') => {
     const timestamp = new Date().toLocaleTimeString();
     const prefix = level.toUpperCase().padEnd(5);
     console.log(`[${timestamp}] ${prefix} ${message}`);
+};
+
+// Function to create QR code image
+const createQRImage = (qrData) => {
+    try {
+        // Generate QR code as PNG
+        const qrPng = qr.imageSync(qrData, { type: 'png' });
+        
+        // Create qr folder if it doesn't exist
+        const qrFolder = path.join(__dirname, 'qr');
+        if (!fs.existsSync(qrFolder)) {
+            fs.mkdirSync(qrFolder);
+        }
+        
+        // Save QR code
+        const qrPath = path.join(qrFolder, 'latest-qr.png');
+        fs.writeFileSync(qrPath, qrPng);
+        
+        log(`QR Code saved as: ${qrPath}`, 'info');
+        log('Please scan this QR code with WhatsApp', 'info');
+        
+        // Also log QR in terminal
+        qrcode.generate(qrData, { small: true });
+        
+        // Return the path
+        return qrPath;
+    } catch (error) {
+        log(`Error creating QR image: ${error.message}`, 'error');
+        return null;
+    }
 };
 
 // Debug function for object inspection
@@ -32,10 +65,24 @@ async function connectToWhatsApp() {
         // Handle connection updates
         sock.ev.on('connection.update', async (update) => {
             const { connection, lastDisconnect, qr } = update;
-            
-            if(qr) {
-                log('Scan QR code below to login:', 'info');
-                qrcode.generate(qr, { small: true });
+              if(qr) {
+                log('='.repeat(50), 'info');
+                log('NEW QR CODE GENERATED', 'info');
+                log('='.repeat(50), 'info');
+                
+                // Create QR code image and get the path
+                const qrPath = createQRImage(qr);
+                
+                if (qrPath) {
+                    log('QR Code has been generated in two formats:', 'info');
+                    log('1. As an image file at: ' + qrPath, 'info');
+                    log('2. In the terminal below:', 'info');
+                } else {
+                    log('Failed to create QR image file, showing terminal QR only:', 'info');
+                    qrcode.generate(qr, { small: true });
+                }
+                
+                log('='.repeat(50), 'info');
             }
 
             if (connection === 'close') {
